@@ -1,9 +1,6 @@
-[![NPM](https://nodei.co/npm/jschardet.png?downloads=true&downloadRank=true)](https://nodei.co/npm/jschardet/)
-
 JsChardet
 =========
-
-Port of python's chardet (https://github.com/chardet/chardet).
+> 在 [jschardet](https://github.com/aadsm/jschardet) 基础上添加了 `GBK` 识别。
 
 License
 -------
@@ -29,9 +26,7 @@ npm install jschardet
     // { encoding: "Big5", confidence: 0.99 }
 
 ### Browser
-Copy and include [jschardet.min.js](https://github.com/aadsm/jschardet/tree/master/dist/jschardet.min.js) in your web page.
-
-This library is also available in [cdnjs](https://cdnjs.com) at [https://cdnjs.cloudflare.com/ajax/libs/jschardet/1.4.1/jschardet.min.js](https://cdnjs.cloudflare.com/ajax/libs/jschardet/1.4.1/jschardet.min.js)
+Copy and include [jschardet.min.js](https://github.com/linjinze999/jschardet/tree/master/dist/jschardet.min.js) in your web page.
 
 Options
 -------
@@ -65,6 +60,7 @@ Supported Charsets
 * UTF-16 BE or LE (with a BOM)
 * UTF-8 (with or without a BOM)
 * ASCII
+* GBK
 
 Technical Information
 ---------------------
@@ -79,11 +75,9 @@ I haven't been able to create tests to correctly detect:
 
 Development
 -----------
-Use `npm run dist` to update the distribution files. They're available at https://github.com/aadsm/jschardet/tree/master/dist.
+Use `npm run dist` to update the distribution files. They're available at https://github.com/linjinze999/jschardet/tree/master/dist.
 
 Authors
 -------
 
-Ported from python to JavaScript by António Afonso (https://github.com/aadsm/jschardet)
-
-Transformed into an npm package by Markus Ast (https://github.com/brainafk)
+Add GBK from [jschardet](https://github.com/aadsm/jschardet) by linjinze999 (https://github.com/linjinze999/jschardet)

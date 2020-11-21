@@ -35,11 +35,13 @@ var EUCJPProber = require('./eucjpprober');
 var GB2312Prober = require('./gb2312prober');
 var EUCKRProber = require('./euckrprober');
 var EUCTWProber = require('./euctwprober');
+var GBKProber = require('./gbkprober');
 
 function MBCSGroupProber() {
     CharSetGroupProber.apply(this);
     this._mProbers = [
         new UTF8Prober(),
+        new GBKProber(),
         new SJISProber(),
         new EUCJPProber(),
         new GB2312Prober(),

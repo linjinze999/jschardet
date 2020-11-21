@@ -1,6 +1,6 @@
 (function(f){if(typeof exports==="object"&&typeof module!=="undefined"){module.exports=f()}else if(typeof define==="function"&&define.amd){define([],f)}else{var g;if(typeof window!=="undefined"){g=window}else if(typeof global!=="undefined"){g=global}else if(typeof self!=="undefined"){g=self}else{g=this}g.jschardet = f()}})(function(){var define,module,exports;return (function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c="function"==typeof require&&require;if(!f&&c)return c(i,!0);if(u)return u(i,!0);var a=new Error("Cannot find module '"+i+"'");throw a.code="MODULE_NOT_FOUND",a}var p=n[i]={exports:{}};e[i][0].call(p.exports,function(r){var n=e[i][1][r];return o(n||r)},p,p.exports,r,e,n,t)}return n[i].exports}for(var u="function"==typeof require&&require,i=0;i<t.length;i++)o(t[i]);return o}return r})()({1:[function(require,module,exports){
 module.exports = require('./src')
-},{"./src":19}],2:[function(require,module,exports){
+},{"./src":20}],2:[function(require,module,exports){
 /*
  * The Original Code is Mozilla Universal charset detector code.
  *
@@ -983,7 +983,7 @@ Big5Prober.prototype = new MultiByteCharSetProber();
 
 module.exports = Big5Prober
 
-},{"./chardistribution":4,"./codingstatemachine":7,"./mbcharsetprober":30,"./mbcssm/big5":32}],4:[function(require,module,exports){
+},{"./chardistribution":4,"./codingstatemachine":7,"./mbcharsetprober":31,"./mbcssm/big5":33}],4:[function(require,module,exports){
 /*
  * The Original Code is Mozilla Universal charset detector code.
  *
@@ -1286,7 +1286,7 @@ EUCJPDistributionAnalysis.prototype = new CharDistributionAnalysis();
 
 exports.EUCJPDistributionAnalysis = EUCJPDistributionAnalysis
 
-},{"./big5freq":2,"./euckrfreq":12,"./euctwfreq":14,"./gb2312freq":16,"./jisfreq":20}],5:[function(require,module,exports){
+},{"./big5freq":2,"./euckrfreq":12,"./euctwfreq":14,"./gb2312freq":16,"./jisfreq":21}],5:[function(require,module,exports){
 /*
  * The Original Code is Mozilla Universal charset detector code.
  *
@@ -1404,7 +1404,7 @@ CharSetGroupProber.prototype = new CharSetProber();
 
 module.exports = CharSetGroupProber
 
-},{"./charsetprober":6,"./constants":8,"./logger":29}],6:[function(require,module,exports){
+},{"./charsetprober":6,"./constants":8,"./logger":30}],6:[function(require,module,exports){
 /*
  * The Original Code is Mozilla Universal charset detector code.
  *
@@ -2084,7 +2084,7 @@ EUCJPProber.prototype = new MultiByteCharSetProber();
 
 module.exports = EUCJPProber
 
-},{"./chardistribution":4,"./codingstatemachine":7,"./constants":8,"./jpcntx":21,"./logger":29,"./mbcharsetprober":30,"./mbcssm/eucjp":33}],12:[function(require,module,exports){
+},{"./chardistribution":4,"./codingstatemachine":7,"./constants":8,"./jpcntx":22,"./logger":30,"./mbcharsetprober":31,"./mbcssm/eucjp":34}],12:[function(require,module,exports){
 /*
  * The Original Code is Mozilla Universal charset detector code.
  *
@@ -2739,7 +2739,7 @@ EUCKRProber.prototype = new MultiByteCharSetProber();
 
 module.exports = EUCKRProber;
 
-},{"./chardistribution":4,"./codingstatemachine":7,"./mbcharsetprober":30,"./mbcssm/euckr":34}],14:[function(require,module,exports){
+},{"./chardistribution":4,"./codingstatemachine":7,"./mbcharsetprober":31,"./mbcssm/euckr":35}],14:[function(require,module,exports){
 /*
  * The Original Code is Mozilla Universal charset detector code.
  *
@@ -3226,7 +3226,7 @@ EUCTWProber.prototype = new MultiByteCharSetProber();
 
 module.exports = EUCTWProber
 
-},{"./chardistribution":4,"./codingstatemachine":7,"./mbcharsetprober":30,"./mbcssm/euctw":35}],16:[function(require,module,exports){
+},{"./chardistribution":4,"./codingstatemachine":7,"./mbcharsetprober":31,"./mbcssm/euctw":36}],16:[function(require,module,exports){
 /*
  * The Original Code is Mozilla Universal charset detector code.
  *
@@ -3757,7 +3757,89 @@ GB2312Prober.prototype = new MultiByteCharSetProber();
 
 module.exports = GB2312Prober
 
-},{"./chardistribution":4,"./codingstatemachine":7,"./mbcharsetprober":30,"./mbcssm/gb2312":36}],18:[function(require,module,exports){
+},{"./chardistribution":4,"./codingstatemachine":7,"./mbcharsetprober":31,"./mbcssm/gb2312":37}],18:[function(require,module,exports){
+/*
+ * gbk
+ */
+
+var CharSetProber = require('./charsetprober');
+var constants = require('./constants');
+
+function GBKProber() {
+    CharSetProber.apply(this);
+
+    var ONE_CHAR_PROB = 0.5;
+    var self = this;
+
+    function init() {
+        self.reset();
+    }
+
+    this.reset = function() {
+        GBKProber.prototype.reset.apply(this);
+        this._mNumOfMBChar = 0;
+        this._mMBCharLen = 0;
+        this._mFullLen = 0;
+        this._mBasicAsciiLen = 0;
+    };
+
+    this.getCharsetName = function() {
+        return "GBK";
+    };
+
+    this.feed = function(aBuf) {
+        this._mFullLen += aBuf.length;
+        for( var i = 0, c1, c2; i < aBuf.length; ) {
+            c1 = aBuf.charCodeAt(i);
+            if(c1 <= 0x7F) {
+                // ascii
+                i++;
+                this._mBasicAsciiLen ++;
+                continue;
+            }
+            c2 = aBuf.charCodeAt(i + 1);
+            if (c1 >= 0x81 && c1 <= 0xFE && c2 >= 40 && c2 <= 0xFE && c2 !== 0x7F){
+                i += 2;
+                this._mNumOfMBChar ++;
+                this._mMBCharLen += 2;
+            } else {
+                this._mState = constants.notMe;
+                break;
+            }
+        }
+        if( this.getState() == constants.detecting ) {
+            if( this.getConfidence() > constants.SHORTCUT_THRESHOLD ) {
+                this._mState = constants.foundIt;
+            }
+        }
+
+        return this.getState();
+    };
+
+    this.getConfidence = function() {
+        var unlike = 0.99;
+        var mbCharRatio = 0;
+        var nonBasciAsciiLen = (this._mFullLen - this._mBasicAsciiLen);
+        if( nonBasciAsciiLen > 0 ) {
+            mbCharRatio = this._mMBCharLen / nonBasciAsciiLen;
+        }
+        if( this._mNumOfMBChar < 6 && mbCharRatio <= 0.6 ) {
+            for( var i = 0; i < this._mNumOfMBChar; i++ ) {
+                unlike *= Math.pow(ONE_CHAR_PROB, this._mNumOfMBChar);
+            }
+            return 1 - unlike;
+        } else {
+            return unlike;
+        }
+    };
+
+    init();
+}
+GBKProber.prototype = new CharSetProber();
+
+module.exports = GBKProber;
+
+},{"./charsetprober":6,"./constants":8}],19:[function(require,module,exports){
 /*
  * The Original Code is Mozilla Universal charset detector code.
  *
@@ -4082,7 +4164,7 @@ HebrewProber.prototype = new CharSetProber();
 
 module.exports = HebrewProber
 
-},{"./charsetprober":6,"./constants":8}],19:[function(require,module,exports){
+},{"./charsetprober":6,"./constants":8}],20:[function(require,module,exports){
 /*
  * The Original Code is Mozilla Universal charset detector code.
  *
@@ -4131,7 +4213,7 @@ exports.enableDebug = function() {
     setLogger(console.log.bind(console));
 }
 
-},{"./logger":29,"./universaldetector":42}],20:[function(require,module,exports){
+},{"./logger":30,"./universaldetector":43}],21:[function(require,module,exports){
 /*
  * The Original Code is Mozilla Universal charset detector code.
  *
@@ -4702,7 +4784,7 @@ exports.JISCharToFreqOrder = [
 8256,8257,8258,8259,8260,8261,8262,8263,8264,8265,8266,8267,8268,8269,8270,8271 // 8272
 ];
 
-},{}],21:[function(require,module,exports){
+},{}],22:[function(require,module,exports){
 /*
  * The Original Code is Mozilla Universal charset detector code.
  *
@@ -4946,7 +5028,7 @@ EUCJPContextAnalysis.prototype = new JapaneseContextAnalysis();
 
 exports.EUCJPContextAnalysis = EUCJPContextAnalysis
 
-},{}],22:[function(require,module,exports){
+},{}],23:[function(require,module,exports){
 /*
  * The Original Code is Mozilla Universal charset detector code.
  *
@@ -5176,7 +5258,7 @@ exports.Win1251BulgarianModel = {
     "charsetName"           : "windows-1251"
 };
 
-},{}],23:[function(require,module,exports){
+},{}],24:[function(require,module,exports){
 /*
  * The Original Code is Mozilla Universal charset detector code.
  *
@@ -5507,7 +5589,7 @@ exports.Ibm855Model = {
     "charsetName"             : "IBM855"
 };
 
-},{}],24:[function(require,module,exports){
+},{}],25:[function(require,module,exports){
 /*
  * The Original Code is Mozilla Universal charset detector code.
  *
@@ -5734,7 +5816,7 @@ exports.Win1253GreekModel = {
     "charsetName"           : "windows-1253"
 };
 
-},{}],25:[function(require,module,exports){
+},{}],26:[function(require,module,exports){
 /*
  * The Original Code is Mozilla Universal charset detector code.
  *
@@ -5935,7 +6017,7 @@ exports.Win1255HebrewModel = {
     "charsetName"           : "windows-1255"
 };
 
-},{}],26:[function(require,module,exports){
+},{}],27:[function(require,module,exports){
 /*
  * The Original Code is Mozilla Universal charset detector code.
  *
@@ -6162,7 +6244,7 @@ exports.Win1250HungarianModel = {
     "charsetName"           : "windows-1250"
 };
 
-},{}],27:[function(require,module,exports){
+},{}],28:[function(require,module,exports){
 /*
  * The Original Code is Mozilla Universal charset detector code.
  *
@@ -6364,7 +6446,7 @@ exports.TIS620ThaiModel = {
     "charsetName"           : "TIS-620"
 };
 
-},{}],28:[function(require,module,exports){
+},{}],29:[function(require,module,exports){
 /*
  * The Original Code is Mozilla Universal charset detector code.
  *
@@ -6530,7 +6612,7 @@ Latin1Prober.prototype = new CharSetProber();
 
 module.exports = Latin1Prober
 
-},{"./charsetprober":6,"./constants":8}],29:[function(require,module,exports){
+},{"./charsetprober":6,"./constants":8}],30:[function(require,module,exports){
 // By default, do nothing
 exports.log = function () {};
 
@@ -6539,7 +6621,7 @@ exports.setLogger = function setLogger(loggerFunction) {
   exports.log = loggerFunction;
 };
 
-},{}],30:[function(require,module,exports){
+},{}],31:[function(require,module,exports){
 /*
  * The Original Code is Mozilla Universal charset detector code.
  *
@@ -6642,7 +6724,7 @@ MultiByteCharSetProber.prototype = new CharSetProber();
 
 module.exports = MultiByteCharSetProber
 
-},{"./charsetprober":6,"./constants":8,"./logger":29}],31:[function(require,module,exports){
+},{"./charsetprober":6,"./constants":8,"./logger":30}],32:[function(require,module,exports){
 /*
  * The Original Code is Mozilla Universal charset detector code.
  *
@@ -6680,11 +6762,13 @@ var EUCJPProber = require('./eucjpprober');
 var GB2312Prober = require('./gb2312prober');
 var EUCKRProber = require('./euckrprober');
 var EUCTWProber = require('./euctwprober');
+var GBKProber = require('./gbkprober');
 
 function MBCSGroupProber() {
     CharSetGroupProber.apply(this);
     this._mProbers = [
         new UTF8Prober(),
+        new GBKProber(),
         new SJISProber(),
         new EUCJPProber(),
         new GB2312Prober(),
@@ -6698,7 +6782,7 @@ MBCSGroupProber.prototype = new CharSetGroupProber();
 
 module.exports = MBCSGroupProber
 
-},{"./big5prober":3,"./charsetgroupprober":5,"./eucjpprober":11,"./euckrprober":13,"./euctwprober":15,"./gb2312prober":17,"./sjisprober":41,"./utf8prober":43}],32:[function(require,module,exports){
+},{"./big5prober":3,"./charsetgroupprober":5,"./eucjpprober":11,"./euckrprober":13,"./euctwprober":15,"./gb2312prober":17,"./gbkprober":18,"./sjisprober":42,"./utf8prober":44}],33:[function(require,module,exports){
 var consts = require('../constants');
 
 var BIG5_cls = [
@@ -6752,7 +6836,7 @@ module.exports = {
     "name"          : "Big5"
 };
 
-},{"../constants":8}],33:[function(require,module,exports){
+},{"../constants":8}],34:[function(require,module,exports){
 var consts = require('../constants');
 
 var EUCJP_cls = [
@@ -6808,7 +6892,7 @@ module.exports = {
     "name"          : "EUC-JP"
 };
 
-},{"../constants":8}],34:[function(require,module,exports){
+},{"../constants":8}],35:[function(require,module,exports){
 var consts = require('../constants');
 
 var EUCKR_cls  = [
@@ -6861,7 +6945,7 @@ module.exports = {
     "name"          : "EUC-KR"
 };
 
-},{"../constants":8}],35:[function(require,module,exports){
+},{"../constants":8}],36:[function(require,module,exports){
 var consts = require('../constants');
 
 var EUCTW_cls = [
@@ -6918,7 +7002,7 @@ module.exports = {
     "name"          : "x-euc-tw"
 };
 
-},{"../constants":8}],36:[function(require,module,exports){
+},{"../constants":8}],37:[function(require,module,exports){
 var consts = require('../constants');
 
 var GB2312_cls = [
@@ -6980,7 +7064,7 @@ module.exports = {
     "name"          : "GB2312"
 };
 
-},{"../constants":8}],37:[function(require,module,exports){
+},{"../constants":8}],38:[function(require,module,exports){
 var consts = require('../constants');
 
 var SJIS_cls = [
@@ -7036,7 +7120,7 @@ module.exports = {
     "name"          : "Shift_JIS"
 };
 
-},{"../constants":8}],38:[function(require,module,exports){
+},{"../constants":8}],39:[function(require,module,exports){
 var consts = require('../constants');
 
 var UTF8_cls = [
@@ -7113,7 +7197,7 @@ module.exports = {
     "name"          : "UTF-8"
 };
 
-},{"../constants":8}],39:[function(require,module,exports){
+},{"../constants":8}],40:[function(require,module,exports){
 /*
  * The Original Code is Mozilla Universal charset detector code.
  *
@@ -7252,7 +7336,7 @@ SingleByteCharSetProber.prototype = new CharSetProber();
 
 module.exports = SingleByteCharSetProber
 
-},{"./charsetprober":6,"./constants":8,"./logger":29}],40:[function(require,module,exports){
+},{"./charsetprober":6,"./constants":8,"./logger":30}],41:[function(require,module,exports){
 /*
  * The Original Code is Mozilla Universal charset detector code.
  *
@@ -7328,7 +7412,7 @@ SBCSGroupProber.prototype = new CharSetGroupProber();
 
 module.exports = SBCSGroupProber;
 
-},{"./charsetgroupprober":5,"./hebrewprober":18,"./langbulgarianmodel":22,"./langcyrillicmodel":23,"./langgreekmodel":24,"./langhebrewmodel":25,"./langhungarianmodel":26,"./langthaimodel":27,"./sbcharsetprober":39}],41:[function(require,module,exports){
+},{"./charsetgroupprober":5,"./hebrewprober":19,"./langbulgarianmodel":23,"./langcyrillicmodel":24,"./langgreekmodel":25,"./langhebrewmodel":26,"./langhungarianmodel":27,"./langthaimodel":28,"./sbcharsetprober":40}],42:[function(require,module,exports){
 /*
  * The Original Code is Mozilla Universal charset detector code.
  *
@@ -7435,7 +7519,7 @@ SJISProber.prototype = new MultiByteCharSetProber();
 
 module.exports = SJISProber
 
-},{"./chardistribution":4,"./codingstatemachine":7,"./constants":8,"./jpcntx":21,"./logger":29,"./mbcharsetprober":30,"./mbcssm/sjis":37}],42:[function(require,module,exports){
+},{"./chardistribution":4,"./codingstatemachine":7,"./constants":8,"./jpcntx":22,"./logger":30,"./mbcharsetprober":31,"./mbcssm/sjis":38}],43:[function(require,module,exports){
 /*
  * The Original Code is Mozilla Universal charset detector code.
  *
@@ -7648,7 +7732,7 @@ function UniversalDetector(options) {
 
 module.exports = UniversalDetector;
 
-},{"./constants":8,"./escprober":9,"./latin1prober":28,"./logger":29,"./mbcsgroupprober":31,"./sbcsgroupprober":40}],43:[function(require,module,exports){
+},{"./constants":8,"./escprober":9,"./latin1prober":29,"./logger":30,"./mbcsgroupprober":32,"./sbcsgroupprober":41}],44:[function(require,module,exports){
 /*
  * The Original Code is Mozilla Universal charset detector code.
  *
@@ -7760,5 +7844,5 @@ UTF8Prober.prototype = new CharSetProber();
 
 module.exports = UTF8Prober;
 
-},{"./charsetprober":6,"./codingstatemachine":7,"./constants":8,"./mbcssm/utf8":38}]},{},[1])(1)
+},{"./charsetprober":6,"./codingstatemachine":7,"./constants":8,"./mbcssm/utf8":39}]},{},[1])(1)
 });
